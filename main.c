@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -19,7 +19,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -56,9 +55,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t isr_value;
-char data[128];
-uint8_t index;
+
 /* USER CODE END 0 */
 
 /**
@@ -90,32 +87,21 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  MX_DMA_Init();
-  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_Delay(2000);
 
-HAL_UART_Receive_IT(&huart1,&isr_value,1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  { 
-  HAL_UART_Receive_IT(&huart1,&isr_value,1);
-  HAL_UART_Transmit(&huart2,data,isr_value,1000);
-  HAL_Delay(2000);
-
- if ( isr_value == '1'){
-   HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,SET);
-      HAL_Delay(1000);
-      }
-      
-      if ( isr_value == '0'){
-   HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,RESET);
-      HAL_Delay(1000);
-      }
-
+  {
+//bluepill_f103c8
+    //     HAL_UART_Transmit(&huart1,(uint8_t *)"uart1",5,1000);
+    // HAL_Delay(1000);
+HAL_UART_Transmit(&huart1,(uint8_t *)"1",1,1000);
+HAL_Delay(1000);
+HAL_UART_Transmit(&huart1,(uint8_t *)"0",1,1000);
+HAL_Delay(1000);
 
     /* USER CODE END WHILE */
 
@@ -133,22 +119,16 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -169,15 +149,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if (huart->Instance == huart1.Instance)
-  {
-   data[index]=isr_value;
-   index++;
-   HAL_UART_Receive_IT(&huart1,&isr_value,1);
-  }
-}
+
 /* USER CODE END 4 */
 
 /**
